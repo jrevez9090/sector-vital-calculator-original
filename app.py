@@ -1,9 +1,10 @@
 import streamlit as st
+import streamlit as st
 import re
 
 st.set_page_config(page_title="Sector Vital Calculator", layout="centered")
 
-st.title("Sector Vital Calculator (Valens Book IV)")
+st.title("Sector Vital Calculator (Valens Book IV - Original Method)")
 
 # ============================
 # CSS STYLE
@@ -201,7 +202,6 @@ if "cycle1" in st.session_state:
             y,m,d = years_to_ymd(duration)
             st.markdown(f"{name}<br><span class='green'>{y}y {m}m {d}d</span><br>(cumulative: <span class='green'>{round(absolute,3)}</span>)", unsafe_allow_html=True)
 
-    # ACTIVE CALCULATION
     age = st.number_input("Enter age to check active planet",0.0,120.0)
 
     completed_cycles = int(age // cycle_length)
@@ -232,63 +232,43 @@ if "cycle1" in st.session_state:
 
     st.markdown(f"Active Planet: <span class='red'>{active_planet}</span>", unsafe_allow_html=True)
 
-    # ---------- SUBPERIODS (VALENS ORIGINAL) ----------
+    # ---------- VALENS ORIGINAL SUBPERIODS ----------
 
-valens_days = {
-    "Saturn": 85,
-    "Jupiter": 34,
-    "Mars": 42.5,
-    "Venus": 22.6667,
-    "Mercury": 56.6667,
-    "Sun": 53.6667,
-    "Moon": 70.8333
-}
+    valens_days = {
+        "Saturn": 85,
+        "Jupiter": 34,
+        "Mars": 42.5,
+        "Venus": 22.6667,
+        "Mercury": 56.6667,
+        "Sun": 53.6667,
+        "Moon": 70.8333
+    }
 
-total_days = sum(valens_days.values())
+    total_days = sum(valens_days.values())
+    main_duration = periods[active_planet] / 4
 
-main_duration = periods[active_planet] / 4
+    start = next(i for i,(n,_,_) in enumerate(active_cycle) if n==active_planet)
+    sub_order = active_cycle[start:] + active_cycle[:start]
 
-start = next(i for i,(n,_,_) in enumerate(active_cycle) if n==active_planet)
-sub_order = active_cycle[start:] + active_cycle[:start]
-
-cumulative_sub = 0
-prev_sub = 0
-sub_active = None
-
-st.markdown("### Subperiods (Valens Original Method)")
-
-for name,_,_ in sub_order:
-
-    proportion = valens_days[name] / total_days
-    sub_duration = main_duration * proportion
-    cumulative_sub += sub_duration
-
-    y2,m2,d2 = years_to_ymd(sub_duration)
-
-    st.markdown(
-        f"{name} - <span class='green'>{y2}y {m2}m {d2}d</span> "
-        f"(cumulative: <span class='green'>{round(cumulative_sub,3)}</span>)",
-        unsafe_allow_html=True
-    )
-
-    if sub_active is None and time_in_main <= cumulative_sub:
-        sub_active = name
-        time_inside_sub = time_in_main - prev_sub
-
-    prev_sub = cumulative_sub
+    cumulative_sub = 0
     prev_sub = 0
     sub_active = None
 
-    st.markdown("### Subperiods")
+    st.markdown("### Subperiods (Valens Original Method)")
 
     for name,_,_ in sub_order:
-        proportion = fixed_days[name]/total_days
-        sub_duration = main_duration*proportion
+
+        proportion = valens_days[name] / total_days
+        sub_duration = main_duration * proportion
         cumulative_sub += sub_duration
 
         y2,m2,d2 = years_to_ymd(sub_duration)
 
-        st.markdown(f"{name} - <span class='green'>{y2}y {m2}m {d2}d</span> (cumulative: <span class='green'>{round(cumulative_sub,3)}</span>)", unsafe_allow_html=True)
+        st.markdown(
+            f"{name} - <span class='green'>{y2}y {m2}m {d2}d</span> "
+            f"(cumulative: <span class='green'>{round(cumulative_sub,3)}</span>)",
+            unsafe_allow_html=True
+        )
 
         if sub_active is None and time_in_main <= cumulative_sub:
             sub_active = name
@@ -299,7 +279,11 @@ for name,_,_ in sub_order:
     if sub_active:
         y3,m3,d3 = years_to_ymd(time_inside_sub)
         st.markdown(f"### Active Subperiod: <span class='red'>{sub_active}</span>", unsafe_allow_html=True)
-        st.markdown(f"Elapsed inside subperiod: <span class='green'>{y3}y {m3}m {d3}d</span>", unsafe_allow_html=True)
+        st.markdown(
+            f"Elapsed inside subperiod: "
+            f"<span class='green'>{y3}y {m3}m {d3}d</span>",
+            unsafe_allow_html=True
+        )
 
 st.markdown("---")
 st.write("Made by Joana Revez")
