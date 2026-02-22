@@ -232,19 +232,50 @@ if "cycle1" in st.session_state:
 
     st.markdown(f"Active Planet: <span class='red'>{active_planet}</span>", unsafe_allow_html=True)
 
-    # SUBPERIODS
-    fixed_days = {}
-    total_days = 0
-    for planet,P in periods.items():
-        days = (2*P)+(P/2)+(P/3)
-        fixed_days[planet]=days
-        total_days+=days
+    # ---------- SUBPERIODS (VALENS ORIGINAL) ----------
 
-    main_duration = periods[active_planet]/4
-    start = next(i for i,(n,_,_) in enumerate(active_cycle) if n==active_planet)
-    sub_order = active_cycle[start:] + active_cycle[:start]
+valens_days = {
+    "Saturn": 85,
+    "Jupiter": 34,
+    "Mars": 42.5,
+    "Venus": 22.6667,
+    "Mercury": 56.6667,
+    "Sun": 53.6667,
+    "Moon": 70.8333
+}
 
-    cumulative_sub = 0
+total_days = sum(valens_days.values())
+
+main_duration = periods[active_planet] / 4
+
+start = next(i for i,(n,_,_) in enumerate(active_cycle) if n==active_planet)
+sub_order = active_cycle[start:] + active_cycle[:start]
+
+cumulative_sub = 0
+prev_sub = 0
+sub_active = None
+
+st.markdown("### Subperiods (Valens Original Method)")
+
+for name,_,_ in sub_order:
+
+    proportion = valens_days[name] / total_days
+    sub_duration = main_duration * proportion
+    cumulative_sub += sub_duration
+
+    y2,m2,d2 = years_to_ymd(sub_duration)
+
+    st.markdown(
+        f"{name} - <span class='green'>{y2}y {m2}m {d2}d</span> "
+        f"(cumulative: <span class='green'>{round(cumulative_sub,3)}</span>)",
+        unsafe_allow_html=True
+    )
+
+    if sub_active is None and time_in_main <= cumulative_sub:
+        sub_active = name
+        time_inside_sub = time_in_main - prev_sub
+
+    prev_sub = cumulative_sub
     prev_sub = 0
     sub_active = None
 
